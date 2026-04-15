@@ -1,0 +1,305 @@
+[[tasks]]
+name = "TASK-0"
+state = "todo"
+depends_on = []
+epic = []
+content = """
+Define core data structures and types
+
+Create Task struct with fields: name, state, depends_on, epic, content
+Create TaskFile struct to hold Vec<Task>
+Implement serde Serialize/Deserialize for both
+Add clap derive macros for CLI parsing
+
+Tests:
+- Task serialization/deserialization roundtrip
+- TaskFile TOML parsing
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-1"
+state = "todo"
+depends_on = ["TASK-0"]
+epic = []
+content = """
+Implement file I/O operations
+
+Create load_tasks() function to read TOML file
+Create save_tasks() function to write TOML file
+Handle file not found (create empty tasks.toml)
+Support --file parameter for custom task file path
+
+Tests:
+- Load existing tasks.toml
+- Save tasks to file
+- Handle missing file gracefully
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-2"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement list command
+
+Create list subcommand with filters: --state, --epic, --verbose
+Filter tasks by state and/or epic
+Display task IDs and first line of content
+Verbose mode shows full task details
+Support --json-out for JSON output
+
+Tests:
+- List all tasks
+- Filter by state
+- Filter by epic
+- Verbose output format
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-3"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement show command
+
+Create show subcommand to display single task
+Accept task-id as argument
+Display all task fields with formatting
+Support --json-out for JSON output
+
+Tests:
+- Show existing task
+- Handle non-existent task ID
+- JSON output format
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-4"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement new command
+
+Create new subcommand to add tasks
+Support content from argument or stdin (-)
+Generate unique task ID (TASK-N format)
+Default state is 'todo'
+Support --json-in for JSON input
+
+Tests:
+- Create task with content argument
+- Create task from stdin
+- Verify unique ID generation
+- JSON input parsing
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-5"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement edit state command
+
+Create edit state subcommand
+Accept task-id and new state as arguments
+Validate state value
+Update task state in file
+Support --json-in for JSON input
+
+Tests:
+- Change task state successfully
+- Handle invalid task ID
+- Handle invalid state value
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-6"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement edit content command
+
+Create edit content subcommand
+Accept task-id and new content as arguments
+Replace entire task content
+Support --json-in for JSON input
+
+Tests:
+- Replace task content successfully
+- Handle invalid task ID
+- Preserve other task fields
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-7"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement add content command
+
+Create add content subcommand
+Accept task-id and content to append
+Append content to existing task content
+Support --json-in for JSON input
+
+Tests:
+- Append content successfully
+- Handle invalid task ID
+- Preserve existing content
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-8"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement add depends-on command
+
+Create add depends-on subcommand
+Accept task-id and dependency task-id
+Add dependency to task's depends_on array
+Validate both task IDs exist
+Support --json-in for JSON input
+
+Tests:
+- Add dependency successfully
+- Handle invalid task IDs
+- Prevent duplicate dependencies
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-9"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement del depends-on command
+
+Create del depends-on subcommand
+Accept task-id and dependency task-id to remove
+Remove dependency from task's depends_on array
+Validate task ID exists
+Support --json-in for JSON input
+
+Tests:
+- Remove dependency successfully
+- Handle invalid task ID
+- Handle non-existent dependency
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-10"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement add epic command
+
+Create add epic subcommand
+Accept task-id and epic name
+Add epic to task's epic array
+Validate task ID exists
+Support --json-in for JSON input
+
+Tests:
+- Add epic successfully
+- Handle invalid task ID
+- Prevent duplicate epics
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-11"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement del epic command
+
+Create del epic subcommand
+Accept task-id and epic name to remove
+Remove epic from task's epic array
+Validate task ID exists
+Support --json-in for JSON input
+
+Tests:
+- Remove epic successfully
+- Handle invalid task ID
+- Handle non-existent epic
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-12"
+state = "todo"
+depends_on = ["TASK-1"]
+epic = []
+content = """
+Implement claim command
+
+Create claim subcommand to atomically claim next task
+Accept new-state as argument (default: in-progress)
+Support --state filter (default: todo)
+Support --epic filter
+Find first task matching filters with no blocking dependencies
+Update task state atomically
+Support --json-in for JSON input
+
+Tests:
+- Claim task from todo state
+- Claim with state filter
+- Claim with epic filter
+- Handle no available tasks
+- Verify dependency blocking
+
+Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-13"
+state = "todo"
+depends_on = [
+    "TASK-2",
+    "TASK-3",
+    "TASK-4",
+    "TASK-5",
+    "TASK-6",
+    "TASK-7",
+    "TASK-8",
+    "TASK-9",
+    "TASK-10",
+    "TASK-11",
+    "TASK-12",
+]
+epic = []
+content = """
+Create integration tests
+
+Write integration_tests.sh script
+Test all commands with cargo run --
+Verify file operations work correctly
+Test error handling scenarios
+Test JSON input/output modes
+
+Tests:
+- All commands execute successfully
+- File persistence works
+- Error cases handled properly
+
+Done when: all tests pass && code documented"""
