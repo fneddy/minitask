@@ -1,4 +1,4 @@
-# minitask ![release](https://github.com/fneddy/minitask/actions/workflows/release.yml/badge.svg)
+# minitask ![release](https://github.com/SyntaxSmiths/minitask/actions/workflows/release.yml/badge.svg)
 
 A simple, efficient task management CLI tool written in Rust.
 
