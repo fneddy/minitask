@@ -5,11 +5,41 @@ use std::fs::File;
 use std::io::{self, Read, Seek, Write};
 use std::path::PathBuf;
 
+fn print_full_help(cmd: &mut clap::Command) {
+    print_full_help_inner(cmd, "");
+}
+
+fn print_full_help_inner(cmd: &mut clap::Command, path: &str) {
+    let name = cmd.get_name();
+
+    // Build full command path (e.g. "myapp foo bar")
+    let full_path = if path.is_empty() {
+        name.to_string()
+    } else {
+        format!("{} {}", path, name)
+    };
+
+    // 👇 Header so it's obvious which command we're printing
+    println!("========== {} ==========\n", full_path);
+
+    cmd.print_long_help().unwrap();
+    println!("\n");
+
+    // Recurse into subcommands
+    for sub in cmd.get_subcommands_mut() {
+        print_full_help_inner(sub, &full_path);
+    }
+}
+
 /// Task management CLI tool
 #[derive(Parser, Debug)]
 #[command(name = "minitask")]
 #[command(about = "A simple task management tool", long_about = None, arg_required_else_help = true)]
 struct Cli {
+    // Custom long help
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    long_help: bool,
+
     /// Output results as JSON
     #[arg(long, global = true)]
     json_out: bool,
@@ -228,6 +258,11 @@ fn normalize_task_id(id: &str) -> String {
 
 fn main() -> Result<(), std::io::Error> {
     let cli = Cli::parse();
+    if cli.long_help {
+        let mut cmd = Cli::command();
+        print_full_help(&mut cmd);
+        std::process::exit(0);
+    }
 
     let options = FileOptions::new().write(true).read(true).create(true);
     let mut filelock = FileLock::lock(&cli.file, false, options)?;
