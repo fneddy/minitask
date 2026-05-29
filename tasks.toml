@@ -303,3 +303,698 @@ Tests:
 - Error cases handled properly
 
 Done when: all tests pass && code documented"""
+
+[[tasks]]
+name = "TASK-14"
+state = "done"
+depends_on = []
+epic = ["mcp-server"]
+content = """
+Add MCP dependencies to Cargo.toml
+
+Add required dependencies for MCP server implementation:
+- mcp-sdk or equivalent Rust MCP library for protocol handling
+- jsonrpc-core for JSON-RPC message handling
+- tokio with io-std features for async stdio
+- serde_json already present
+
+Research available Rust MCP SDK options and select most mature.
+Document dependency choices in commit message.
+
+Tests:
+- cargo build succeeds with new dependencies
+- no version conflicts
+- all existing tests still pass
+
+Done when: cargo test passes && dependencies documented"""
+
+[[tasks]]
+name = "TASK-15"
+state = "done"
+depends_on = ["TASK-14"]
+epic = ["mcp-server"]
+content = """
+Add Serve subcommand to CLI structure
+
+Add Serve variant to Commands enum with stdio transport option.
+Update main() to handle Serve command with placeholder handler.
+Add basic command-line argument parsing for serve subcommand.
+
+Implementation:
+- Add Serve { transport: Option<String> } to Commands enum
+- Add handle_serve() function stub that prints 'MCP server starting'
+- Wire up in main() match statement
+- Document serve command in help text
+
+Tests:
+- cargo build succeeds
+- minitask serve --help shows usage
+- minitask serve runs without error (placeholder)
+- all existing tests pass
+
+Done when: cargo test passes && serve command accessible"""
+
+[[tasks]]
+name = "TASK-16"
+state = "done"
+depends_on = ["TASK-15"]
+epic = ["mcp-server"]
+content = """
+Implement MCP protocol stdio transport layer
+
+Create MCP server module with stdio JSON-RPC transport.
+Implement initialize/initialized handshake per MCP spec.
+Handle basic request/response cycle over stdin/stdout.
+
+Implementation:
+- Create src/mcp_server.rs module
+- Implement stdio reader/writer with line-based JSON-RPC
+- Handle initialize request with server capabilities
+- Implement request routing framework
+- Add proper error handling for malformed messages
+
+Tests:
+- Unit tests for JSON-RPC message parsing
+- Test initialize handshake sequence
+- Test error response formatting
+- all existing tests pass
+
+Done when: cargo test passes && MCP handshake works"""
+
+[[tasks]]
+name = "TASK-17"
+state = "done"
+depends_on = ["TASK-16"]
+epic = ["mcp-server"]
+content = """
+Implement list_tasks MCP tool
+
+Create list_tasks tool with state/epic/verbose parameters.
+Map to existing handle_list() function with JSON output.
+Register tool in MCP server capabilities.
+
+Implementation:
+- Define list_tasks tool schema in mcp_server.rs
+- Create tool handler that calls handle_list with json_out=true
+- Parse tool arguments to function parameters
+- Return structured JSON response
+- Add tool to server capabilities during initialize
+
+Tests:
+- Unit test list_tasks tool handler
+- Test with various filter combinations
+- Test error cases (invalid state, etc.)
+- Integration test via MCP protocol
+- all existing tests pass
+
+Done when: cargo test passes && list_tasks tool works via MCP"""
+
+[[tasks]]
+name = "TASK-18"
+state = "done"
+depends_on = ["TASK-16"]
+epic = ["mcp-server"]
+content = """
+Implement show_task MCP tool
+
+Create show_task tool with task_id and verbose parameters.
+Map to existing handle_show() function with JSON output.
+Register tool in MCP server capabilities.
+
+Implementation:
+- Define show_task tool schema in mcp_server.rs
+- Create tool handler that calls handle_show with json_out=true
+- Parse tool arguments including task_id normalization
+- Return structured JSON response
+- Handle task not found errors properly
+
+Tests:
+- Unit test show_task tool handler
+- Test with valid task IDs (TASK-0, 0 formats)
+- Test verbose vs normal output
+- Test error case for non-existent task
+- all existing tests pass
+
+Done when: cargo test passes && show_task tool works via MCP"""
+
+[[tasks]]
+name = "TASK-19"
+state = "done"
+depends_on = ["TASK-16"]
+epic = ["mcp-server"]
+content = """
+Implement create_task MCP tool
+
+Create create_task tool with content parameter.
+Map to existing handle_new() function with JSON output.
+Register tool in MCP server capabilities.
+
+Implementation:
+- Define create_task tool schema in mcp_server.rs
+- Create tool handler that calls handle_new with json_out=true
+- Parse content argument (no stdin support in MCP context)
+- Return created task with generated ID in JSON
+- Handle file write errors properly
+
+Tests:
+- Unit test create_task tool handler
+- Test task creation with various content
+- Test unique ID generation
+- Test error cases (file permissions, etc.)
+- all existing tests pass
+
+Done when: cargo test passes && create_task tool works via MCP"""
+
+[[tasks]]
+name = "TASK-20"
+state = "done"
+depends_on = [
+    "TASK-16",
+    "TASK-31",
+]
+epic = ["mcp-server"]
+content = """
+Implement edit_task_state and edit_task_content tools
+
+Create two MCP tools for editing task properties.
+Map to handle_edit_state() and handle_edit_content().
+Register both tools in MCP server capabilities.
+
+Implementation:
+- Define edit_task_state tool schema (task_id, state params)
+- Define edit_task_content tool schema (task_id, content params)
+- Create handlers calling respective functions with json_out=true
+- Handle task not found and validation errors
+- Return updated task in JSON response
+
+Tests:
+- Unit tests for both tool handlers
+- Test state transitions (todo->in-progress->done)
+- Test content replacement
+- Test error cases (invalid task, invalid state)
+- all existing tests pass
+
+Done when: cargo test passes && both edit tools work via MCP"""
+
+[[tasks]]
+name = "TASK-21"
+state = "done"
+depends_on = ["TASK-16"]
+epic = ["mcp-server"]
+content = """
+Implement add_task_content MCP tool
+
+Create add_task_content tool for appending to task content.
+Map to existing handle_add_content() function.
+Register tool in MCP server capabilities.
+
+Implementation:
+- Define add_task_content tool schema (task_id, content params)
+- Create tool handler calling handle_add_content with json_out=true
+- Parse arguments with task_id normalization
+- Return updated task in JSON response
+- Handle task not found errors
+
+Tests:
+- Unit test add_task_content tool handler
+- Test content appending preserves existing content
+- Test with various content including newlines
+- Test error case for non-existent task
+- all existing tests pass
+
+Done when: cargo test passes && add_task_content works via MCP"""
+
+[[tasks]]
+name = "TASK-22"
+state = "done"
+depends_on = ["TASK-16"]
+epic = ["mcp-server"]
+content = """
+Implement dependency management MCP tools
+
+Create add_task_dependency and remove_task_dependency tools.
+Map to handle_add_depends_on() and handle_del_depends_on().
+Register both tools in MCP server capabilities.
+
+Implementation:
+- Define add_task_dependency schema (task_id, depends_on params)
+- Define remove_task_dependency schema (task_id, depends_on params)
+- Create handlers calling respective functions with json_out=true
+- Normalize both task IDs in arguments
+- Handle validation errors (task not found, dependency not found)
+
+Tests:
+- Unit tests for both tool handlers
+- Test adding valid dependencies
+- Test removing dependencies
+- Test duplicate prevention
+- Test error cases (invalid task IDs)
+- all existing tests pass
+
+Done when: cargo test passes && dependency tools work via MCP"""
+
+[[tasks]]
+name = "TASK-23"
+state = "done"
+depends_on = ["TASK-16"]
+epic = ["mcp-server"]
+content = """
+Implement epic management MCP tools
+
+Create add_task_epic and remove_task_epic tools.
+Map to handle_add_epic() and handle_del_epic().
+Register both tools in MCP server capabilities.
+
+Implementation:
+- Define add_task_epic schema (task_id, epic params)
+- Define remove_task_epic schema (task_id, epic params)
+- Create handlers calling respective functions with json_out=true
+- Normalize task_id in arguments
+- Handle validation errors and duplicate prevention
+
+Tests:
+- Unit tests for both tool handlers
+- Test adding epics to tasks
+- Test removing epics from tasks
+- Test duplicate epic prevention
+- Test error cases (invalid task ID)
+- all existing tests pass
+
+Done when: cargo test passes && epic tools work via MCP"""
+
+[[tasks]]
+name = "TASK-24"
+state = "done"
+depends_on = ["TASK-16"]
+epic = ["mcp-server"]
+content = """
+Implement claim_task MCP tool
+
+Create claim_task tool with new_state, state, epic parameters.
+Map to existing handle_claim() function.
+Register tool in MCP server capabilities.
+
+Implementation:
+- Define claim_task schema (new_state, state, epic params)
+- Create tool handler calling handle_claim with json_out=true
+- Parse arguments with proper defaults (state='todo')
+- Return claimed task in JSON response
+- Handle no available tasks error properly
+
+Tests:
+- Unit test claim_task tool handler
+- Test claiming with default state filter
+- Test claiming with epic filter
+- Test dependency blocking behavior
+- Test error when no tasks available
+- all existing tests pass
+
+Done when: cargo test passes && claim_task tool works via MCP"""
+
+[[tasks]]
+name = "TASK-25"
+state = "done"
+depends_on = [
+    "TASK-17",
+    "TASK-18",
+    "TASK-19",
+    "TASK-20",
+    "TASK-21",
+    "TASK-22",
+    "TASK-23",
+    "TASK-24",
+]
+epic = ["mcp-server"]
+content = """
+Implement MCP resource support for tasks
+
+Add resource exposure to MCP server for direct task access.
+Implement resource URIs: task://TASK-ID and task://TASK-ID/content.
+Register resources in MCP server capabilities.
+
+Implementation:
+- Add resources/list handler to return available task URIs
+- Add resources/read handler for task:// URIs
+- Support task://TASK-ID format returning full task JSON
+- Support task://TASK-ID/content format returning just content
+- Handle invalid URIs and non-existent tasks
+
+Tests:
+- Unit test resource URI parsing
+- Test resources/list returns current tasks
+- Test resources/read for full task
+- Test resources/read for content only
+- Test error cases (invalid URI, task not found)
+- all existing tests pass
+
+Done when: cargo test passes && MCP resources work"""
+
+[[tasks]]
+name = "TASK-26"
+state = "done"
+depends_on = ["TASK-25"]
+epic = ["mcp-server"]
+content = """
+Add comprehensive MCP integration tests
+
+Create integration test suite for MCP server functionality.
+Test complete request/response cycles via stdio protocol.
+Verify all tools and resources work end-to-end.
+
+Implementation:
+- Create tests/mcp_integration.rs test file
+- Implement mock MCP client for testing
+- Test initialize handshake
+- Test all 11 tools with various scenarios
+- Test resource listing and reading
+- Test error handling and edge cases
+
+Tests:
+- All MCP tools tested via protocol
+- All resources tested via protocol
+- Error cases properly handled
+- Protocol compliance verified
+- all existing tests pass
+
+Done when: cargo test passes && integration tests comprehensive"""
+
+[[tasks]]
+name = "TASK-27"
+state = "done"
+depends_on = ["TASK-26"]
+epic = ["mcp-server"]
+content = """
+Add MCP server documentation and examples
+
+Create comprehensive documentation for MCP server usage.
+Add configuration examples and usage guide.
+Update README with MCP server information.
+
+Implementation:
+- Create docs/MCP_SERVER.md with detailed guide
+- Document all 11 tools with parameter descriptions
+- Document resource URIs and usage patterns
+- Add Bob/Claude Desktop configuration examples
+- Add troubleshooting section
+- Update README.md with MCP server section
+
+Tests:
+- Documentation is complete and accurate
+- Examples are tested and working
+- Configuration examples are valid JSON
+- all existing tests pass
+
+Done when: cargo test passes && documentation complete"""
+
+[[tasks]]
+name = "TASK-28"
+state = "done"
+depends_on = []
+epic = []
+content = """
+Apply TASK_17_REVIEW_1 findings
+
+Fix issues found in review:
+- Add file_path parameter to list_tasks tool schema
+- Add state validation (todo/in-progress/done)
+- Refactor to avoid hardcoded tasks.toml path
+- Add comprehensive error case tests
+- Add tests for epic filter and verbose flag
+- Add tests for combined filters
+
+Tests:
+- test invalid state parameter returns error
+- test epic filter works
+- test verbose flag works
+- test combined state+epic filters
+- test empty results case
+
+Exit criteria:
+- all tests pass
+- code documented
+- no hardcoded file paths in tool handler
+- state validation implemented"""
+
+[[tasks]]
+name = "TASK-31"
+state = "done"
+depends_on = []
+epic = []
+content = """
+Store gained knowledge in Bob memory palace
+
+Capture MCP edit tool implementation details and test
+coverage from TASK-20 so future work can reuse pattern.
+Do this after code and tests complete, before closing task.
+
+Tests:
+- memory entry created with MCP edit tool details
+- note mentions validation and JSON response behavior
+
+Done when: memory saved && notes accurate
+"""
+
+[[tasks]]
+name = "TASK-32"
+state = "done"
+depends_on = []
+epic = []
+content = """
+Remove Task struct duplication from main.rs
+
+Keep Task and TaskFile structs only in lib.rs. Remove duplicate
+definitions from main.rs. Update main.rs imports to use structs
+from minitask crate.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- CLI commands work (list, show, edit)
+- MCP server starts and responds
+
+Exit criteria:
+- Task struct exists only in lib.rs
+- main.rs imports Task from minitask crate
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-33"
+state = "done"
+depends_on = []
+epic = []
+content = """
+Centralize path traversal validation
+
+Create validate_file_path function in lib.rs that checks for path
+traversal (..) and validates paths are within workspace. Replace
+all scattered path validation checks in mcp_server.rs tool handlers
+with calls to centralized function.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- path traversal attempts rejected
+- valid paths accepted
+- MCP tools use centralized validation
+
+Exit criteria:
+- validate_file_path function exists in lib.rs
+- all 11 MCP tool handlers use centralized validation
+- no scattered path checks remain
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-34"
+state = "done"
+depends_on = ["TASK-32"]
+epic = []
+content = """
+Remove handler function duplication
+
+Remove duplicate handler functions from main.rs (handle_edit_state,
+handle_edit_content, handle_add_content, handle_add_depends_on,
+handle_del_depends_on, handle_add_epic, handle_del_epic,
+handle_claim, handle_list). Keep only in lib.rs. Update main.rs
+to import and use handlers from minitask crate.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- CLI commands work correctly
+- MCP server functions correctly
+
+Exit criteria:
+- handlers exist only in lib.rs
+- main.rs imports handlers from minitask
+- no duplicate handler code remains
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-35"
+state = "done"
+depends_on = []
+epic = []
+content = """
+Implement From<io::Error> for JsonRpcError
+
+Add From trait implementation to convert io::Error to JsonRpcError
+automatically. Map ErrorKind variants to appropriate JSON-RPC error
+codes. Update MCP tool handlers to use automatic conversion instead
+of manual map_err calls.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- error conversions work correctly
+- MCP tools return proper error codes
+- NotFound maps to INVALID_PARAMS
+- PermissionDenied maps to INVALID_PARAMS
+
+Exit criteria:
+- From<io::Error> trait implemented
+- MCP handlers use automatic conversion
+- manual error mapping removed where possible
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-36"
+state = "done"
+depends_on = ["TASK-34"]
+epic = []
+content = """
+Centralize state validation logic
+
+Create VALID_STATES constant and validate_state function in lib.rs.
+Replace hardcoded state checks in handle_edit_state (both lib.rs
+and main.rs), MCP tool handlers, and tool schema definitions with
+calls to centralized validation function.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- invalid states rejected with clear message
+- valid states (todo, in-progress, done) accepted
+- error messages list valid states
+
+Exit criteria:
+- VALID_STATES constant defined in lib.rs
+- validate_state function exists
+- all state checks use centralized validation
+- no hardcoded state lists remain
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-37"
+state = "done"
+depends_on = []
+epic = []
+content = """
+Add structured logging with tracing crate
+
+Add tracing crate dependency to Cargo.toml. Replace eprintln!
+debug statements in mcp_server.rs with structured tracing calls
+(info, warn, error, debug). Add log levels and context to all
+logging points.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- MCP server logs structured events
+- log levels work correctly
+- context included in logs
+
+Exit criteria:
+- tracing crate added to dependencies
+- eprintln! replaced with tracing macros
+- structured logging throughout mcp_server.rs
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-38"
+state = "done"
+depends_on = [
+    "TASK-35",
+    "TASK-37",
+]
+epic = []
+content = """
+Split mcp_server.rs into modular structure
+
+Create src/mcp_server/ directory with modules: mod.rs (core server),
+protocol.rs (JSON-RPC types), tools/ directory with separate files
+for each tool handler, and resources.rs. Move code from monolithic
+mcp_server.rs into appropriate modules. Update imports throughout.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- MCP server starts and responds
+- all 11 tools work correctly
+- resources work correctly
+
+Exit criteria:
+- mcp_server.rs split into modules
+- tools in separate files under tools/
+- protocol types in protocol.rs
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-39"
+state = "done"
+depends_on = ["TASK-38"]
+epic = []
+content = """
+Reorganize test files into structured layout
+
+Create tests/ directory structure with unit/, integration/, and
+common/ subdirectories. Move tests from src/tests.rs to
+tests/unit/. Move MCP tests from mcp_server modules to
+tests/unit/mcp/. Keep integration tests in tests/integration/.
+Create common/fixtures.rs for shared test utilities.
+
+Tests:
+- cargo build succeeds
+- cargo test passes all tests
+- all unit tests run from tests/unit/
+- integration tests run from tests/integration/
+- no test regressions
+
+Exit criteria:
+- tests organized in tests/ directory
+- unit tests in tests/unit/
+- integration tests in tests/integration/
+- shared utilities in tests/common/
+- all tests pass
+- changes committed to git"""
+
+[[tasks]]
+name = "TASK-40"
+state = "done"
+depends_on = ["TASK-39"]
+epic = []
+content = """
+Push refactoring knowledge to Bob's mempalace
+
+Document refactoring patterns, lessons learned, and architectural
+decisions from the code cleanup work. Store in Bob's memory system
+for future reference. Include: duplication removal patterns,
+modularization approach, validation centralization, error handling
+improvements.
+
+Tests:
+- memories stored successfully
+- knowledge accessible via search
+- patterns documented clearly
+
+Exit criteria:
+- refactoring knowledge stored in mempalace
+- patterns documented for reuse
+- lessons learned captured
+- changes committed to git"""

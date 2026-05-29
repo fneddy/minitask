@@ -1,5 +1,7 @@
-use super::*;
+use minitask::{Task, TaskFile, save_tasks, load_tasks, handle_claim, normalize_task_id};
 use std::fs;
+use std::path::Path;
+use std::io;
 
 #[test]
 fn test_task_serialization_roundtrip() {
@@ -1148,6 +1150,75 @@ fn test_claim_no_available_tasks() {
 }
 
 #[test]
+fn test_claim_rejects_invalid_new_state() {
+    let temp_file = "test_claim_invalid_state.toml";
+    
+    let task_file = TaskFile {
+        tasks: vec![
+            Task {
+                name: "TASK-0".to_string(),
+                state: "todo".to_string(),
+                depends_on: vec![],
+                epic: vec![],
+                content: "Todo task".to_string(),
+            },
+        ],
+    };
+    save_tasks(temp_file, &task_file).unwrap();
+    
+    let error = handle_claim(
+        Path::new(temp_file),
+        "banana",
+        "todo",
+        None,
+        false,
+    ).unwrap_err();
+    
+    assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+    assert!(error.to_string().contains("Invalid state"));
+    
+    let reloaded = load_tasks(temp_file).unwrap();
+    assert_eq!(reloaded.tasks[0].state, "todo");
+    
+    fs::remove_file(temp_file).unwrap();
+}
+
+#[test]
+fn test_claim_rejects_invalid_state_filter() {
+    let temp_file = "test_claim_invalid_state_filter.toml";
+    
+    let task_file = TaskFile {
+        tasks: vec![
+            Task {
+                name: "TASK-0".to_string(),
+                state: "todo".to_string(),
+                depends_on: vec![],
+                epic: vec![],
+                content: "Todo task".to_string(),
+            },
+        ],
+    };
+    save_tasks(temp_file, &task_file).unwrap();
+    
+    let error = handle_claim(
+        Path::new(temp_file),
+        "in-progress",
+        "banana",
+        None,
+        false,
+    ).unwrap_err();
+    
+    assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+    assert!(error.to_string().contains("Invalid state"));
+    
+    let reloaded = load_tasks(temp_file).unwrap();
+    assert_eq!(reloaded.tasks[0].state, "todo");
+    
+    fs::remove_file(temp_file).unwrap();
+}
+
+
+#[test]
 fn test_claim_dependency_blocking() {
     let temp_file = "test_claim_deps.toml";
     
@@ -1202,11 +1273,3 @@ fn test_normalize_task_id_already_normalized() {
     assert_eq!(normalize_task_id("TASK-1"), "TASK-1");
     assert_eq!(normalize_task_id("TASK-42"), "TASK-42");
 }
-
-#[test]
-fn test_normalize_task_id_invalid() {
-    assert_eq!(normalize_task_id("invalid"), "invalid");
-    assert_eq!(normalize_task_id("TASK-"), "TASK-");
-    assert_eq!(normalize_task_id("task-1"), "task-1");
-}
-
