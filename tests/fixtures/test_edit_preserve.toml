@@ -1,0 +1,6 @@
+[[tasks]]
+name = "TASK-0"
+state = "done"
+depends_on = ["TASK-1"]
+epic = ["epic1"]
+content = "Original content"

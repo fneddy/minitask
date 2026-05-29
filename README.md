@@ -24,6 +24,31 @@ minitask claim in-progress
 minitask edit state TASK-0 done
 ```
 
+## MCP Server
+
+minitask includes an MCP (Model Context Protocol) server for integration with AI assistants like Claude Desktop and Bob Shell. The server provides 11 tools for task management and resource URIs for accessing task data.
+
+### Quick Setup
+
+Start the MCP server:
+```bash
+minitask mcp
+```
+
+Configure in Bob Shell (`~/.bob/config.json`):
+```json
+{
+  "mcpServers": {
+    "minitask": {
+      "command": "minitask",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+For complete MCP documentation including all tools, resource URIs, configuration examples, and troubleshooting, see [docs/MCP_SERVER.md](docs/MCP_SERVER.md).
+
 ## Key Features
 
 - Simple TOML storage format

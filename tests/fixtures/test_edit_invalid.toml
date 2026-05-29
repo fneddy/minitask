@@ -1,0 +1,6 @@
+[[tasks]]
+name = "TASK-0"
+state = "todo"
+depends_on = []
+epic = []
+content = "Test"
